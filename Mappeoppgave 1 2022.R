@@ -1,3 +1,5 @@
+# Mappeoppgave 1
+# Samarbeid om koder med Ida Marie Hansen og Sofia Andrea Møen.
 library(readr)
 library(zoo)
 library(ggplot2)
