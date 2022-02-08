@@ -1,30 +1,32 @@
+# Mappeoppgave 2
+# Samarbeid om koder med Ida Marie Hansen og Sofia Andrea Møen.
 library(jsonlite)
 library(tidyverse)
 library(ggplot2)
 library(dplyr)
 
 #oppgave 1
-# Laster inn .json dataen og kaller den jason1.
-jason1 <- "https://static01.nyt.com/newsgraphics/2021/12/20/us-coronavirus-deaths-2021/ff0adde21623e111d8ce103fedecf7ffc7906264/scatter.json"
+# Laster inn .json dataen og kaller den jason.
+jason <- "https://static01.nyt.com/newsgraphics/2021/12/20/us-coronavirus-deaths-2021/ff0adde21623e111d8ce103fedecf7ffc7906264/scatter.json"
 
-# Gj?r dataen om til en data.frame kallt df.
-df <- fromJSON(jason1)
+# Gjør dataen om til en data.frame kallt df.
+df <- fromJSON(jason)
 
-# Kopierer dataen fra df og lager et nytt data.frame som heter covid19.
-covid19 <- df
+# Kopierer dataen fra df og lager et nytt data.frame som heter covid_19.
+covid_19 <- df
 
 # Lager en ny kolonne som heter fully_vaccinated, som inneholder 
 # Antall fullt vaksinerte.
-covid19 <- covid19 %>% 
+covid_19 <- covid_19 %>% 
   mutate(fully_vaccinated = fully_vaccinated_pct_of_pop*100)
 # Lager en ny kolonne som heter short_name, som inneholder 
 # Navnene til statene i USA, men forkortet.
-covid19 <- covid19 %>%
-  mutate(short_name = abbreviate(covid19$name, minlength=2))
+covid_19 <- covid_19 %>%
+  mutate(short_name = abbreviate(covid_19$name, minlength=2))
 
-# Plotter dataene fra covid19, med fully_vaccinated p? x-aksen og 
+# Plotter dataene fra covid_19, med fully_vaccinated p? x-aksen og 
 # Deaths_per_100k p? y-aksen.
-covid19 %>% ggplot(aes(x= fully_vaccinated, y= deaths_per_100k)) +
+covid_19 %>% ggplot(aes(x= fully_vaccinated, y= deaths_per_100k)) +
   geom_point(aes(colour=name)) + 
   geom_smooth(method="loess", se=F) +
   labs(title= "Covid-19 relaterte d?dsfall i USA i forhold til vaksinerte og uvaksinerte", 
@@ -59,9 +61,9 @@ lower death rate",
 
 #Oppgave 2
 
-lm(deaths_per_100k ~ fully_vaccinated, data= covid19)
+lm(deaths_per_100k ~ fully_vaccinated, data= covid_19)
 
-covid19 %>% ggplot(aes(x= fully_vaccinated, y= deaths_per_100k)) +
+covid_19 %>% ggplot(aes(x= fully_vaccinated, y= deaths_per_100k)) +
   geom_point(aes(colour=name)) + 
   geom_smooth(method= lm) +
   labs(title= "Covid-19 relaterte d?dsfall i USA i forhold til vaksinerte og uvaksinerte", 
