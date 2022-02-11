@@ -57,16 +57,31 @@ first_table %>%
               size = 1)+
   theme_bw()
 
-# Grafen viser 29 el-bil modeller - 2 el-biler som kom over 600 wltp og ble derfor fjernet fra grafen. Alle bil modellene var med i den store rekkeviddetesten hvor man fant ut at alle bilene hadde et avvik fra oppgitt rekkevidde på mere enn 10 prosent. Mange av de nye populære familiebilene rullet mellom 10 og 15 prosent kortere enn lovet i vinterkulda. Stopp på grafen sier noe om når bilen faktisk stoppet i testen, mens wltp sier noe om rekkevidden bilen skulle ha kjørt ifølge bilforhandlerne.
+# Grafen viser 29 el-bil modeller - 2 el-biler som kom over 600 
+# wltp og ble derfor fjernet fra grafen. Alle bil modellene var 
+# med i den store rekkeviddetesten hvor man fant ut at alle 
+# bilene hadde et avvik fra oppgitt rekkevidde på mere enn 10 
+# prosent. Mange av de nye populære familiebilene rullet mellom 
+# 10 og 15 prosent kortere enn lovet i vinterkulda. 
+# Stopp på grafen sier noe om når bilen faktisk stoppet i testen, 
+#mens wltp sier noe om rekkevidden bilen skulle ha kjørt ifølge 
+# bilforhandlerne.
 
 
 # Oppgave 2
 
-# Benytter R sin lm() funksjon. Deretter bruker man “stopp” som y-variabel og “wltp” som x-variabel, og spesifiser navnet på datasettet ditt.lm(<navn på y-variabel> ~ <navn på x-variabel>, data = <navn på datasettet>). 
+# Benytter R sin lm() funksjon. Deretter bruker man “stopp” 
+# som y-variabel og “wltp” som x-variabel, og spesifiser navnet 
+# på datasettet ditt.lm(<navn på y-variabel> ~ <navn på x-variabel>, 
+# data = <navn på datasettet>). 
 
 lm(stopp ~ wltp_tall, data = first_table)
-# Koeffisienter er vektene som minimerer summen av kvadratet av feilene. Til syvende og sist ønsker vi å finne en avskjæring og en helning slik at den resulterende tilpassede linjen er så nært som mulig de 29 datapunktene i datasettet vårt.                    
-# Dermed er (intercept) = -26.6450 avskjæringen og (wltp_tall) = 0.8671 er helningen.
+# Koeffisienter er vektene som minimerer summen av kvadratet av 
+# feilene. Til syvende og sist ønsker vi å finne en avskjæring 
+# og en helning slik at den resulterende tilpassede linjen er så 
+# nært som mulig de 29 datapunktene i datasettet vårt.                    
+# Dermed er (intercept) = -26.6450 avskjæringen og 
+# (wltp_tall) = 0.8671 er helningen.
 
 first_table %>% ggplot(aes(x = wltp_tall, y = stopp)) +
   geom_point(aes(colour = modell_temp_varierte_fra_0_til_10)) +
@@ -79,4 +94,6 @@ first_table %>% ggplot(aes(x = wltp_tall, y = stopp)) +
   scale_x_continuous(limits = c(200, 600)) +
   geom_abline(col = "red",
               size = 1)
-# Så plotter vi car_length på nytt, men denne gangen tar vi med lm- funksjonen med i grafen. Dermed får vi en ny 'blå' linje gående igjennom de 29 punktene som en slags gjennomsnitt linje.
+# Så plotter vi car_length på nytt, men denne gangen tar vi med 
+# lm- funksjonen med i grafen. Dermed får vi en ny 'blå' linje 
+# gående igjennom de 29 punktene som en slags gjennomsnitt linje.
