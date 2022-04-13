@@ -1,0 +1,137 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+<html>
+<head>
+<title>Graf over antall ansatte</title>
+<link rel="shortcut icon" type="image/jpg" href="img/favicon.ico"/>
+</head>
+
+<style>
+	.slider {
+	  -webkit-appearance: none;
+	  height: 1px;
+	  background: #c7c7c7;
+	  outline: none;
+	  opacity: 0.5;
+	  -webkit-transition: .2s;
+	  transition: opacity .2s;
+	  width:900;
+	  margin-left:50px;
+	}
+
+	img.slides {
+	  width:1000;
+	}
+
+	.slider:hover {
+	  opacity: 1;
+	}
+
+	.slider::-webkit-slider-thumb {
+	  -webkit-appearance: none;
+	  appearance: none;
+	  width: 85px;
+	  height: 25px;
+	  background: url("img/slidericon.png");
+	  cursor: pointer;
+	}
+
+	.slider::-moz-range-thumb {
+	  width: 85px;
+	  height: 25px;
+	  background:  url("img/slidericon.png");
+	  cursor: pointer;
+	  border: none;
+	}
+	p {
+	  margin-left: 20px;
+	  max-width: 980px;
+	  font-family: "verdana";
+	  text-align: left;
+	  color:#063f5c;
+	  font-size: 1em;
+	  z-index:-2;
+	}
+
+	h1 {
+	  max-width: 1000;
+	  font-family: "verdana";
+	  color:#063f5c;
+	  text-align: center;
+	  font-size: 1.5em
+	}
+</style>
+
+<body>
+	<h1 style="text-align:center">
+		Graf over optimal mengde arbeidskraft
+	</h1><br>
+	<p class="content">
+		<img class="line" src="img/break_line.png" width=975/><br>
+		Her er en graf over hvor mange medarbeidere man skal ansette i en bedrift for å få maks fortjeneste. <br> 
+                Tangenten som tangerer i maksimumspunktet viser hvor bedriften har det mest lønnsomt mtp medarbeidere. <br>
+		Dette er før parameterverdien
+		<span id="demo"></span>
+		og dette er etter. <br>
+                <button type="button" onclick='document.getElementById("demo").innerHTML = "0"'>Reset parameterverdien! </button>
+		<br>
+	Her kommer slideren og bildet.
+    icon=folium.features.CustomIcon(f"img/coins/{int(r['Mynter'])}coins.png")
+    folium.Marker([lat,lon+0.01],tooltip=f"Formue:{r['Formue']}",icon=icon).add_to(tromso)
+	</p>
+	
+
+	<div class="content">
+<body> 
+Bildet nedenfor har 3 funksjoner som kan beveges på når slideren dras, de er: <br>
+1. Den opprinnelige profittfunksjonen, blå linje kallt fortjeneste. <br>
+2. Den horisontale tangenten som tangerer i maksimumspunktet, oransje linje. <br>
+3. En stripet vertikal linje som viser mengden arbeidskraft i optimum, svart linje. <br>
+</body>
+  
+<br><br><input type='range' min='0' max='14' value='34' class='slider' id='myRange'><br><br>
+<img class='slides' src='./img/fig0.png'>
+<img class='slides' src='./img/fig1.png'>
+<img class='slides' src='./img/fig2.png'>
+<img class='slides' src='./img/fig3.png'>
+<img class='slides' src='./img/fig4.png'>
+<img class='slides' src='./img/fig5.png'>
+<img class='slides' src='./img/fig6.png'>
+<img class='slides' src='./img/fig7.png'>
+<img class='slides' src='./img/fig8.png'>
+<img class='slides' src='./img/fig9.png'>
+<img class='slides' src='./img/fig10.png'>
+<img class='slides' src='./img/fig11.png'>
+<img class='slides' src='./img/fig12.png'>
+<img class='slides' src='./img/fig13.png'>
+<img class='slides' src='./img/fig14.png'>
+
+</body>
+<script>
+	var array = JSON.parse('[-30.0, -26.571428571428573, -23.142857142857142, -19.714285714285715, -16.285714285714285, -12.857142857142858, -9.42857142857143, -6.0, -2.571428571428573, 0.8571428571428541, 4.285714285714285, 7.714285714285715, 11.142857142857139, 14.57142857142857, 18.0]');    
+	var slideIndex = 1;
+    var slider = document.getElementById("myRange");
+    var output = document.getElementById("demo");
+    
+    show_img(slider.value);
+    
+    output.innerHTML = array[slider.value];
+    
+    function show_img(n) {
+      localStorage.swipe_enabled=0;
+      var i;
+      var x = document.getElementsByClassName("slides");
+    
+      for (i = 0; i < x.length; i++) {
+        x[i].style.display = "none";  
+      }
+      x[n].style.display = "block";  
+      output.innerHTML = array[n];
+    }
+    
+    slider.oninput = function() {
+      show_img(this.value) ;
+    }
+</script>
+</html> 
