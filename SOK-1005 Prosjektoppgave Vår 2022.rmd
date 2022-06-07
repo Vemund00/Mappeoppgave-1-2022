@@ -1,0 +1,268 @@
+---
+title: "SOK-1005 Prosjektoppgave Vår 2022"
+author: 'Kandidatnummer: 21 og 5'
+date: "07-06-2022"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+fig_width: 6 
+fig_height: 4 
+---
+
+```{r include=FALSE}
+setwd("~/")
+```
+
+```{r include=FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8) 
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(dpi=300,fig.width=7, echo = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE}
+# Laster inn innstillingene som skal brukes.
+# Endrer til UTF-8 koding.
+options(encoding = "UTF-8") 
+
+# Utvider antall linjer for utskrift av resultatene i konsollen. (Gjør dette for å slippe problemer med desimaler i datasettene).
+options(scipen = 999) 
+
+# Laster inn pakker.
+library(readr) # Leser filer.
+library(knitr) # God for markdown.  
+library(tinytex) # Trenger for markdown.
+library(dplyr) # En pakke med flere pakker.
+library(ggplot2) # Bra for grafikk på grafene.
+library(tidyr) # Verktøy for å lage ryddig data
+library(tidyverse) # Laster flere "tidyverse" pakker.
+library(weathermetrics) # Gjør fahrenheit til celsius
+library(reshape2) # Endrer på data fra bredt til langt.
+library(lubridate) # Gjør det lettere og manipulere datoer.
+library(markdown) # Gjør det lettere og holde på med markdown.
+```
+
+## Oppgave 1
+Først skal det skrives R kode som slår sammen de 6 datasettene nedenfor til et stort datasett. For å gjøre dette må man benytte de variablene som de ulike datasettene har til felles. Funksjonen 'read_csv' er nyttig for dette.
+```{r message=FALSE, warning=FALSE}
+# Laster inn csv filene som skal brukes.
+app_attributes <- read_csv("AppWichStoreAttributes.csv")
+county_crime <- read_csv("county_crime.csv") 
+county_empl <- read_csv("county_employment.csv") 
+county_demo <- read_csv("county_demographic.csv") 
+weekly_sales <- read_csv("WEEKLY_SALES_10STORES.csv") 
+weekly_weather <- read_csv("WEEKLY_WEATHER.csv")
+```
+
+```{r}
+# Fikser dato format med å lage en ny dato kolonne som består av 'year, Month, Day' fra andre kolonner.
+weekly_sales <- weekly_sales %>% 
+  select(INV_NUMBER:Day) %>% 
+  mutate(Date = make_date(Year, Month, Day))
+```
+
+```{r}
+# Lager uker ut av datoene med bruk av lubridate::week.
+weekly_sales <- weekly_sales %>% 
+  mutate(weekly_sales, Week = lubridate::week(ymd(Date)))
+```
+
+```{r}
+# "Left join" alle datasettene til et stort kallt "a_big_dataset". 
+a_big_dataset <- left_join(weekly_sales, app_attributes, 
+                           by = c("Store_num" = "Store_Num"))
+
+a_big_dataset <- left_join(a_big_dataset, weekly_weather, 
+                           by = c("Week" = "Weather_Week",
+                                  "Store_Weather_Station"="Weather_Station"))
+
+a_big_dataset <- left_join(a_big_dataset, county_empl, 
+                           by = c("Store_County" = "County_Name"))
+
+a_big_dataset <- left_join(a_big_dataset, county_crime, 
+                           by = c("Store_County" = "County_Name"))
+
+a_big_dataset <- left_join(a_big_dataset, county_demo, 
+                           by = c("Store_County" = "County_Name"))
+```
+
+```{r}
+# Fjerner datasettene som ble brukt i prosessen for å lage et stort datasett.
+rm(app_attributes, county_crime, county_demo, county_empl, weekly_sales,
+   weekly_weather)
+```
+
+For å slå sammen de 6 datasettene til et stort datasett er det brukt de variablene som de har til felles i en "left join" operasjon. "left_join" fra dplyr pakken er en sammenslåings funksjon mellom to datasett som vil returnere alle radene fra en tabell (fra venstre side) og eventuelle samsvarende rader fra den andre tabellen. 
+En venstre sammenføyning vil IKKE returnere verdier for den andre tabellen som ikke allerede eksisterer i den første tabellen, så det er viktig og være obs på.
+Til slutt ble det et stort datasett på 79459 observasjoner og 73 variabler som inneholder observasjoner fra alle de andre datasettene. Nå som dataene er godt sortert kan man begynne og hente ut det man trenger for å lage eventuelle ukentlige og månedlige salgs-grafer.
+
+
+## Oppgave 2
+For en ukentlig salgsrapport til et enkelt utsalg er det planlagt å ta hensyn til sandwish kjeden med navn "power_city_freestand". Noen eksempler på hva innholdet i en langsiktig konsernrapport bør inneholde ville vært : Salg, utgifter, nettoprofit og vær. Figuren som skal lages i denne delen skal kun inneholde ukentlig summert profit. Det vil si at profitten skal summeres og sorters ukentlig og viser hvordan sandwish kjeden`s profit går. 
+For som man vet er profitten det som sier noe om hvordan det går bedriften.
+
+```{r}
+# Gjør fahrenheit til celsius. Gjør dette for å enklere fortå temperaturene.
+a_big_dataset$Avg_Min_Temp <-fahrenheit.to.celsius(a_big_dataset$Avg_Min_Temp)
+
+a_big_dataset$Avg_Max_Temp <-fahrenheit.to.celsius(a_big_dataset$Avg_Max_Temp)
+```
+
+```{r}
+# Lager en kopi av a_big_dataset, men endrer på navnet.
+a_weekly_sales_report <- a_big_dataset
+```
+
+```{r}
+# Gjør alle chr(character) bundet med understrek ved bruk av replace. Dette er for å gjøre det lettere å "filtrere" og "selecte" verdier i datasettet.
+a_weekly_sales_report <- a_weekly_sales_report %>% 
+  mutate(Description = str_replace_all(Description, " ", "_")) %>% 
+  mutate(Store_Name = str_replace_all(Store_Name, " ", "_")) %>% 
+  mutate(Store_City = str_replace_all(Store_City, " ", "_")) %>% 
+  mutate(Store_County = str_replace_all(Store_County, " ", "_")) %>% 
+  mutate(Store_State = str_replace_all(Store_State, " ", "_")) %>% 
+  mutate(Store_Weather_Station = str_replace_all(Store_Weather_Station, 
+                                                 " ", "_")) %>% 
+  mutate(Store_Location = str_replace_all(Store_Location, " ", "_")) %>% 
+  mutate(Store_Minority_Clients = str_replace_all(Store_Minority_Clients, 
+                                                  " ", "_"))
+```
+
+```{r}
+# Ser på "Store_Name" for å se på alle de unike butikk navnene.
+unique(a_weekly_sales_report$Store_Name)
+```
+
+```{r}
+# Velger og bruke butikken med navn "Power_City_Freestand".
+power_city_freestand <- a_weekly_sales_report %>%  
+  filter(a_weekly_sales_report$Store_Name == 'Power_City_FreeStand')
+```
+
+```{r}
+# Lager en ny kolonne med navn "week" som er annerledes enn den andre "Week" kolonnen med stor "W". Denne nye "week" raden skal inneholde datoene men med 7 dagers mellomrom, altså over et år med datoer men summert ukentlig.
+power_city_freestand$week <- 
+  floor_date(power_city_freestand$Date, "week")
+```
+
+
+```{r}
+# Lager en funksjon som gjør det lettere og trekke ut ukene av datoene.
+stat_sum_single <- function(fun, geom="point", ...) {
+  stat_summary(fun.y=fun, colour="red", geom=geom, size = 1.5, ...)
+}
+```
+
+```{r warning=FALSE}
+# Plotter dataen for power_city_freestand med Date "week" på x-aksen og profit på y-aksen.
+ggplot(power_city_freestand, 
+       aes(x=floor_date(Date, "week"), 
+           y=Profit, fill = "blue", 
+           width = 3)) + 
+  stat_sum_single(sum, geom="line") +
+  labs(title = "Ukentlig summert profit",
+       subtitle = "Hver ukes profitt er sammenslått",
+       caption = "(Ukentlig salgsrapport til et enkelt utsalg)",
+       tag = "Fig. 1",
+       x = "Dato i ukes intervall",
+       y = "Profit i NOK") +
+  theme_bw() +
+  theme(plot.title = element_text(face = "bold",
+                                  margin = margin(10, 0, 10, 0),
+                                  size = 20)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_x_date(date_labels = "%d-%m-%Y", 
+               breaks = unique(power_city_freestand$Date))+
+  scale_y_continuous(label = function(x) {return(paste(x, "NOK"))},
+                     breaks = c(6500, 7000, 7500, 8000, 8500, 9000, 
+                                9500, 10000, 10500, 11000, 11500, 12000,
+                                12500,13000,13500,14000,14500,15000))
+```
+
+Det man ser på figuren er profitten til power_city_freestand. 01.04.2012 øker profitten til topunktet som er på ca.14750 NOK, etter det går profitten bare nedover. 18.11.2012 er profitten på sitt laveste med bare 6500 NOK, dette kan skyldes dårlig vær på grunn av at det er vinter og at kunder derfor handler mindre. Så stiger grafen en del, men faller igjen når julen kommer, for da er folk hjemme og koser seg med julegaver.
+
+
+## Oppgave 3
+For en månedlig salgsrapport til et enkelt utsalg er det planlagt å ta hensyn til salg, utgifter, nettoprofit og vær, altså hva som skal være med i salgsrapporten. Figuren som skal lages i denne delen skal kun inneholde månedlig profit. 
+
+```{r}
+# Lager en ny floor_date med bruk av alle datoer til alle sandwish kjedene, dette gjør at man kan lage en månedlig graf som viser sammenlagt profit til alle kjedene.
+a_weekly_sales_report$month <- floor_date(a_weekly_sales_report$Date, "month")
+```
+
+```{r warning=FALSE}
+# Plotter grafen som skal vise månedlig summert profit for alle sandwish kjedene i en linje.
+ggplot(a_weekly_sales_report, 
+       aes(x=floor_date(Date, "month"), 
+           y=Profit, fill = "blue",
+           width = 3)) + 
+  stat_sum_single(sum, geom="line") +
+  labs(title = "Månedlig summert profit",
+       subtitle = "Hver måneds profitt er sammenslått",
+       caption = "(Månedlig salgsrapport til et enkelt utsalg)",
+       tag = "Fig. 2",
+       x = "Datoer i måneds intervall",
+       y = "Profit i NOK") +
+  theme_bw() +
+  theme(plot.title = element_text(face = "bold",
+                                  margin = margin(10, 0, 10, 0),
+                                  size = 20)) +
+  theme(axis.text.x = element_text(angle = 90, 
+                                   vjust = 0.5)) +
+  scale_x_date(date_labels = "%m-%d-%Y", 
+               breaks = unique(power_city_freestand$Date))+
+  scale_y_continuous(label = function(x) {return(paste(x, "NOK"))},
+                     breaks = c(220000, 230000, 240000, 250000, 260000,
+                                270000, 280000, 290000, 300000, 310000,
+                                320000, 330000, 340000, 350000, 360000))
+```
+
+Det man ser på figuren er profitten til alle sandwish kjedene sammen. 
+Alle kjedene hadde høyest sammenslått profitt 04.01.2012 og i toppunktet
+07.01.2012. Likt som på fig.1(graf 1) kan man se at profitten faller mot 
+vinter tiden. Det er nok ikke så vanlig og spise my sandwisher når det ikke
+er strålende vær.
+
+
+## Oppgave 4
+Dataene kan også benyttes til å planlegge eventuelle nye utsalg,
+altså nye butikker, dersom det er ønskelig. For å finne den mest ideelle 
+lokasjonen kan man se på enkelte områder på dataene, som f.eks: 
+Store_Drive_Through , Store_Near_School , Total_Crimes , Avg_Wind , Snow , Cold_Days. 
+Nedenfor finner man ut hvilken sandwish kjede som befinner seg på den beste plassen, deretter kan man utifra det velge om man vil lage et eventuelt nytt utsalg der eller ikke.
+
+```{r}
+# Finner alle sandwish kjedene som har "kjøre gjennom", nær skole og reisende kunder med å bruke filter. Bruker unique etterpå for å se butikknavnene på de butikkene som oppfyller gitte krav.
+store1 <- a_weekly_sales_report %>% 
+  filter(a_weekly_sales_report$Store_Drive_Through == "Yes",
+         a_weekly_sales_report$Store_Near_School == "Yes",
+         a_weekly_sales_report$Store_Traveller_Clients == "Yes")
+unique(store1$Store_Name)
+```
+
+Det er kun en sandwish kjede som oppfyller alle betingelsene : "Kjøre gjennom", nær skole og reisende kunder og det er "Lake_City_StripMall". Over til temperatur
+
+```{r}
+# Gjør det samme som over, bare med temperatur.
+store2 <- a_weekly_sales_report %>% 
+  filter(a_weekly_sales_report$Avg_Min_Temp > 18,
+         a_weekly_sales_report$Avg_Max_Temp > 36)
+unique(store2$Store_Name)
+```
+
+Det er 5 sandwish kjeder som har hatt observert en mimimums temperatur på 18  og en maximums temperatur på 36 grader. "Lake_City_StripMall" er en av dem. Nå skal vi se på totalt 
+
+```{r}
+store3 <- a_weekly_sales_report %>% 
+  filter(a_weekly_sales_report$County_Total_Crimes < 7500)
+unique(store3$Store_Name)
+```
+
+Igjen kom "Lake_City_StripMall" opp som en av favorittene sammen med 3 andre kjeder.
+
+I konklusjon kan man si at hvis det eventuelt skulle komme et nytt utsalg 
+ville det vært lurt og bygd det i nærheten av "Lake_City_StripMall" pga av
+det gode miljøet der. Det er nært skole, man kan kjøre igjennom der hvis man har det travelt og det er reisende kunder. God temperatur og lite kriminalitet
+er flere faktorer som støtter opp påstanden. 
